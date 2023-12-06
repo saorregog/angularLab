@@ -1,6 +1,6 @@
-<form class="example-form">
+<form class="example-form" (submit)="onSubmit($event)">
   <mat-form-field class="example-full-width">
-    <mat-label>Stock</mat-label>
+    <mat-label>{{ symbol ? symbol : "Stock" }}</mat-label>
     <input
       type="text"
       placeholder="Pick one"
@@ -8,8 +8,8 @@
       matInput
       [formControl]="inputFormControl"
       [matAutocomplete]="auto"
-      (keyup)="onTypingHandler()"
-      (keyup.enter)="onTypingHandler()"
+      (input)="onTypingHandler()"
+      (keyup.enter)="onSelectionHandler()"
     />
     <mat-autocomplete #auto="matAutocomplete">
       @for (option of autocompleteData; track option) {

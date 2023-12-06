@@ -3,6 +3,7 @@
 <app-typehead
   [autocompleteData]="processedAutocompleteData"
   [toggleMode]="toggleMode"
+  [symbol]="symbol"
   (onTyping)="onTypeheadListener($event)"
   (onSelection)="onTypeheadListener($event)"
 />
@@ -10,10 +11,12 @@
 @if (symbol) {
 <app-chart
   [multi]="dataChart"
-  [xAxisLabel]="chartXAxisLabel"
+  [xAxisLabel]="toggleMode === 'daily' ? 'Days' : 'Monthly'"
   [autoScale]="autoScale"
 />
 <app-toggles
+  [toggleMode]="toggleMode"
+  [autoScale]="autoScale"
   (onToggle)="onToggleListener($event)"
   (onAutoScale)="onAutoScaleListener()"
 />

@@ -1,10 +1,9 @@
-import { Component, inject, signal } from '@angular/core';
+import { Component, inject } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { RouterOutlet } from '@angular/router';
 
 // SERVICES
 import { RequestService } from './services/request.service';
-import { InitService } from './services/init.service';
 
 // COMPONENTS
 import { TypeheadComponent } from './components/typehead/typehead.component';
@@ -14,7 +13,9 @@ import { TogglesComponent } from './components/toggles/toggles.component';
 // MODELS
 import { RequestType } from './models/request.model';
 import { Autocomplete } from './models/autocomplete.model';
-import { ChartData, DailyData, MonthlyData } from './models/data.model';
+
+// LIBRARIES
+import { ToastrService } from 'ngx-toastr';
 
 @Component({
   selector: 'app-root',
@@ -33,17 +34,55 @@ export class AppComponent {
   title = 'angularLab';
 
   private requestService = inject(RequestService);
-  private initService = inject(InitService);
+  private toastrService = inject(ToastrService);
 
   symbol: string = '';
 
   toggleMode: string = 'daily';
 
-  chartXAxisLabel: string = 'Days';
-
   autoScale: boolean = true;
 
   processedAutocompleteData: any = [];
+
+  processedDailyData: any = [];
+
+  processedMonthlyData: any = [];
+
+  dataChart!: any;
+
+  ngOnInit() {
+    if (sessionStorage.length) {
+      this.symbol = sessionStorage.getItem('symbol') ?? this.symbol;
+      this.toggleMode = sessionStorage.getItem('toggleMode') ?? this.toggleMode;
+      this.autoScale =
+        JSON.parse(sessionStorage.getItem('autoScale') ?? 'ERROR') ??
+        this.autoScale;
+
+      if (
+        sessionStorage.getItem('processedDailyData') &&
+        this.toggleMode === 'daily'
+      ) {
+        this.dataChart = JSON.parse(
+          sessionStorage.getItem('processedDailyData') ?? 'ERROR'
+        );
+        this.processedDailyData = JSON.parse(
+          sessionStorage.getItem('processedDailyData') ?? 'ERROR'
+        );
+      }
+
+      if (
+        sessionStorage.getItem('processedMonthlyData') &&
+        this.toggleMode === 'monthly'
+      ) {
+        this.dataChart = JSON.parse(
+          sessionStorage.getItem('processedMonthlyData') ?? 'ERROR'
+        );
+        this.processedMonthlyData = JSON.parse(
+          sessionStorage.getItem('processedMonthlyData') ?? 'ERROR'
+        );
+      }
+    }
+  }
 
   private processAutocompleteData(data: Autocomplete) {
     this.processedAutocompleteData.length = 0;
@@ -55,10 +94,6 @@ export class AppComponent {
       ]);
     }
   }
-
-  processedDailyData: any = [];
-
-  processedMonthlyData: any = [];
 
   private processChartData(type: RequestType, data: any) {
     if (type === 'daily') {
@@ -121,16 +156,28 @@ export class AppComponent {
     }
   }
 
-  dataChart!: ChartData[];
+  private saveOnSessionStorage() {
+    sessionStorage.setItem('symbol', this.symbol);
+    sessionStorage.setItem('toggleMode', this.toggleMode);
+    sessionStorage.setItem('autoScale', String(this.autoScale));
+    sessionStorage.setItem(
+      'processedDailyData',
+      JSON.stringify(this.processedDailyData)
+    );
+    sessionStorage.setItem(
+      'processedMonthlyData',
+      JSON.stringify(this.processedMonthlyData)
+    );
+  }
 
   onTypeheadListener(event: [RequestType, string]) {
     if (
       event[1] !== this.symbol &&
       (event[0] === 'daily' || event[0] === 'monthly')
     ) {
-      this.symbol = event[1];
       this.processedDailyData.length = 0;
       this.processedMonthlyData.length = 0;
+      sessionStorage.clear();
     }
 
     this.requestService.getData(event[0], event[1]).subscribe({
@@ -141,11 +188,59 @@ export class AppComponent {
             break;
 
           case 'daily':
-            this.processChartData('daily', data);
+            if (data.hasOwnProperty('Meta Data')) {
+              this.symbol = event[1];
+              this.processChartData('daily', data);
+            } else if (data.hasOwnProperty('Error Message')) {
+              this.toastrService.error(
+                "This stock symbol doesn't exists!",
+                'ERROR',
+                {
+                  closeButton: true,
+                  timeOut: 3000,
+                  progressBar: true,
+                }
+              );
+            } else if (data.hasOwnProperty('Information')) {
+              this.toastrService.warning(
+                'You have reached the free 25 API requests!',
+                'API Error',
+                {
+                  closeButton: true,
+                  timeOut: 3000,
+                  progressBar: true,
+                }
+              );
+            }
+            this.saveOnSessionStorage();
             break;
 
           case 'monthly':
-            this.processChartData('monthly', data);
+            if (data.hasOwnProperty('Meta Data')) {
+              this.symbol = event[1];
+              this.processChartData('monthly', data);
+            } else if (data.hasOwnProperty('Error Message')) {
+              this.toastrService.error(
+                "This stock symbol doesn't exists!",
+                'ERROR',
+                {
+                  closeButton: true,
+                  timeOut: 3000,
+                  progressBar: true,
+                }
+              );
+            } else if (data.hasOwnProperty('Information')) {
+              this.toastrService.warning(
+                'You have reached the free 25 API requests!',
+                'API Error',
+                {
+                  closeButton: true,
+                  timeOut: 3000,
+                  progressBar: true,
+                }
+              );
+            }
+            this.saveOnSessionStorage();
             break;
         }
       },
@@ -158,6 +253,7 @@ export class AppComponent {
   onToggleListener(event: string) {
     if (this.symbol) {
       this.toggleMode = event;
+      sessionStorage.setItem('toggleMode', this.toggleMode);
 
       if (this.toggleMode === 'daily') {
         if (this.processedDailyData.length) {
@@ -165,19 +261,18 @@ export class AppComponent {
         } else {
           this.onTypeheadListener(['daily', this.symbol]);
         }
-        this.chartXAxisLabel = 'Days';
       } else if (this.toggleMode === 'monthly') {
         if (this.processedMonthlyData.length) {
           this.dataChart = this.processedMonthlyData;
         } else {
           this.onTypeheadListener(['monthly', this.symbol]);
         }
-        this.chartXAxisLabel = 'Months';
       }
     }
   }
 
   onAutoScaleListener() {
     this.autoScale = !this.autoScale;
+    sessionStorage.setItem('autoScale', String(this.autoScale));
   }
 }

@@ -1,11 +1,17 @@
 <mat-button-toggle-group name="favoriteColor" aria-label="Favorite Color">
-  <mat-button-toggle checked value="daily" (click)="onToggleHandler($event)"
+  <mat-button-toggle
+    [checked]="toggleMode === 'daily'"
+    value="daily"
+    (click)="onToggleHandler($event)"
     >Daily</mat-button-toggle
   >
-  <mat-button-toggle value="monthly" (click)="onToggleHandler($event)"
+  <mat-button-toggle
+    [checked]="toggleMode === 'monthly'"
+    value="monthly"
+    (click)="onToggleHandler($event)"
     >Monthly</mat-button-toggle
   >
 </mat-button-toggle-group>
-<mat-slide-toggle (click)="onAutoScaleHandler()" checked="true"
+<mat-slide-toggle (click)="onAutoScaleHandler()" [checked]="autoScale"
   >Auto Scale</mat-slide-toggle
 >

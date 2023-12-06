@@ -16,7 +16,7 @@ export class RequestService {
 
   constructor() {}
 
-  getData(type: RequestType, symbol: string) {
+  getData(type: RequestType, symbol: string): any {
     if (type === 'autocomplete') {
       return this.http.get<Autocomplete>(
         'https://www.alphavantage.co/query?function=SYMBOL_SEARCH&keywords=' +
@@ -40,10 +40,5 @@ export class RequestService {
           this.key
       );
     }
-
-    return this.http.get(
-      'https://www.alphavantage.co/query?function=TIME_SERIES_MONTHLY&' +
-        this.key
-    );
   }
 }
