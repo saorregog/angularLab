@@ -1,10 +1,21 @@
 import { TestBed } from '@angular/core/testing';
+import {
+  HttpClientTestingModule,
+  HttpTestingController,
+} from '@angular/common/http/testing';
+import { NoopAnimationsModule } from '@angular/platform-browser/animations';
+
+// COMPONENTS
 import { AppComponent } from './app.component';
 
-describe('AppComponent', () => {
+// LIBRARIES
+import { provideToastr } from 'ngx-toastr';
+
+fdescribe('Tests for AppComponent', () => {
   beforeEach(async () => {
     await TestBed.configureTestingModule({
-      imports: [AppComponent],
+      imports: [AppComponent, HttpClientTestingModule, NoopAnimationsModule],
+      providers: [provideToastr()],
     }).compileComponents();
   });
 
@@ -24,6 +35,8 @@ describe('AppComponent', () => {
     const fixture = TestBed.createComponent(AppComponent);
     fixture.detectChanges();
     const compiled = fixture.nativeElement as HTMLElement;
-    expect(compiled.querySelector('h1')?.textContent).toContain('Hello, angularLab');
+    expect(compiled.querySelector('h1')?.textContent).toContain(
+      'Avanzatech Financial'
+    );
   });
 });
