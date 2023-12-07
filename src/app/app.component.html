@@ -1,5 +1,7 @@
 <h1>Avanzatech Financial</h1>
 
+<p>Stocks</p>
+
 <app-typehead
   [autocompleteData]="processedAutocompleteData"
   [toggleMode]="toggleMode"
@@ -10,6 +12,7 @@
 
 @if (symbol) {
 <app-chart
+  [view]="view"
   [multi]="dataChart"
   [xAxisLabel]="toggleMode === 'daily' ? 'Days' : 'Monthly'"
   [autoScale]="autoScale"

@@ -1,0 +1,14 @@
+#toggles-group {
+  margin-top: 30px;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+}
+
+#button-toggles {
+  margin-right: 20px;
+}
+
+#slide-toggle {
+  margin-left: 20px;
+}

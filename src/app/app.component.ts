@@ -36,6 +36,8 @@ export class AppComponent {
   private requestService = inject(RequestService);
   private toastrService = inject(ToastrService);
 
+  view: [number, number] = [700, 300];
+
   symbol: string = '';
 
   toggleMode: string = 'daily';
@@ -51,35 +53,38 @@ export class AppComponent {
   dataChart!: any;
 
   ngOnInit() {
+    if (window.innerWidth < 710) {
+      let initialWidth = 700 - (710 - window.innerWidth);
+      let initialHeight = 300 - (710 - window.innerWidth);
+
+      this.view = [initialWidth, initialHeight < 250 ? 250 : initialHeight];
+    }
+
     if (sessionStorage.length) {
       this.symbol = sessionStorage.getItem('symbol') ?? this.symbol;
       this.toggleMode = sessionStorage.getItem('toggleMode') ?? this.toggleMode;
-      this.autoScale =
-        JSON.parse(sessionStorage.getItem('autoScale') ?? 'ERROR') ??
-        this.autoScale;
+      this.autoScale = JSON.parse(
+        sessionStorage.getItem('autoScale') ?? 'true'
+      );
+      this.processedDailyData =
+        JSON.parse(sessionStorage.getItem('processedDailyData') ?? '') ||
+        this.processedDailyData;
+      this.processedMonthlyData =
+        JSON.parse(sessionStorage.getItem('processedMonthlyData') ?? '') ||
+        this.processedMonthlyData;
 
-      if (
-        sessionStorage.getItem('processedDailyData') &&
-        this.toggleMode === 'daily'
-      ) {
-        this.dataChart = JSON.parse(
-          sessionStorage.getItem('processedDailyData') ?? 'ERROR'
-        );
-        this.processedDailyData = JSON.parse(
-          sessionStorage.getItem('processedDailyData') ?? 'ERROR'
-        );
-      }
-
-      if (
-        sessionStorage.getItem('processedMonthlyData') &&
-        this.toggleMode === 'monthly'
-      ) {
-        this.dataChart = JSON.parse(
-          sessionStorage.getItem('processedMonthlyData') ?? 'ERROR'
-        );
-        this.processedMonthlyData = JSON.parse(
-          sessionStorage.getItem('processedMonthlyData') ?? 'ERROR'
-        );
+      if (this.toggleMode === 'daily') {
+        if (this.processedDailyData.length) {
+          this.dataChart = this.processedDailyData;
+        } else {
+          this.onTypeheadListener(['daily', this.symbol]);
+        }
+      } else if (this.toggleMode === 'monthly') {
+        if (this.processedMonthlyData.length) {
+          this.dataChart = this.processedMonthlyData;
+        } else {
+          this.onTypeheadListener(['monthly', this.symbol]);
+        }
       }
     }
   }
@@ -171,6 +176,11 @@ export class AppComponent {
   }
 
   onTypeheadListener(event: [RequestType, string]) {
+    if (event[0] === 'no-valid') {
+      this.processedAutocompleteData.length = 0;
+      return;
+    }
+
     if (
       event[1] !== this.symbol &&
       (event[0] === 'daily' || event[0] === 'monthly')
@@ -184,13 +194,26 @@ export class AppComponent {
       next: (data: any) => {
         switch (event[0]) {
           case 'autocomplete':
-            this.processAutocompleteData(data);
+            if (data.hasOwnProperty('bestMatches')) {
+              this.processAutocompleteData(data);
+            } else if (data.hasOwnProperty('Information')) {
+              this.toastrService.warning(
+                'You have reached the free 25 API requests!',
+                'API Error',
+                {
+                  closeButton: true,
+                  timeOut: 3000,
+                  progressBar: true,
+                }
+              );
+            }
             break;
 
           case 'daily':
             if (data.hasOwnProperty('Meta Data')) {
               this.symbol = event[1];
               this.processChartData('daily', data);
+              this.saveOnSessionStorage();
             } else if (data.hasOwnProperty('Error Message')) {
               this.toastrService.error(
                 "This stock symbol doesn't exists!",
@@ -212,13 +235,13 @@ export class AppComponent {
                 }
               );
             }
-            this.saveOnSessionStorage();
             break;
 
           case 'monthly':
             if (data.hasOwnProperty('Meta Data')) {
               this.symbol = event[1];
               this.processChartData('monthly', data);
+              this.saveOnSessionStorage();
             } else if (data.hasOwnProperty('Error Message')) {
               this.toastrService.error(
                 "This stock symbol doesn't exists!",
@@ -240,7 +263,6 @@ export class AppComponent {
                 }
               );
             }
-            this.saveOnSessionStorage();
             break;
         }
       },

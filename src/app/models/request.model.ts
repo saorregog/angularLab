@@ -1,1 +1,1 @@
-export type RequestType = 'autocomplete' | 'daily' | 'monthly';
+export type RequestType = 'autocomplete' | 'daily' | 'monthly' | 'no-valid';

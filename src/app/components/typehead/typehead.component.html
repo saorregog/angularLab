@@ -1,9 +1,9 @@
-<form class="example-form" (submit)="onSubmit($event)">
+<form class="container-form" (submit)="onSubmit($event)">
   <mat-form-field class="example-full-width">
     <mat-label>{{ symbol ? symbol : "Stock" }}</mat-label>
     <input
       type="text"
-      placeholder="Pick one"
+      placeholder="Type in stock name or symbol"
       aria-label="Stock"
       matInput
       [formControl]="inputFormControl"

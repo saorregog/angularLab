@@ -45,13 +45,15 @@ export class TypeheadComponent {
   onTypingHandler() {
     clearTimeout(this.debounce);
 
-    let validateEmitInput = () => {
-      if (this.inputFormControl.valid) {
+    if (this.inputFormControl.valid) {
+      let validateEmitInput = () => {
         this.onTyping.emit(['autocomplete', this.inputFormControl.value]);
-      }
-    };
+      };
 
-    this.debounce = setTimeout(validateEmitInput, 300);
+      this.debounce = setTimeout(validateEmitInput, 300);
+    } else {
+      this.onTyping.emit(['no-valid', this.inputFormControl.value]);
+    }
   }
 
   onSelectionHandler() {
